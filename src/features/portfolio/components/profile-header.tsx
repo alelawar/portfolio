@@ -52,25 +52,25 @@ export function ProfileHeader({
               {USER.displayName}
             </h1>
             <div className="inline-flex items-center gap-1 sm:gap-1.5">
-              <VerifiedIcon
+              {/* <VerifiedIcon
                 className="size-5 shrink-0 sm:size-[22px]"
                 aria-label="Verified profile"
                 role="img"
-              />
+              /> */}
               <a
-                href="https://example.com"
+                href="https://ipb.ac.id"
                 target="_blank"
                 rel="noopener noreferrer"
-                title="Perusahaan Contoh"
-                aria-label="Perusahaan Contoh"
-                className="relative inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-[#cfd9de] bg-white p-[2px] shadow-2xs transition-transform hover:scale-105 dark:border-[#536471] sm:size-[22px] sm:rounded-[4.5px]"
+                title="IPB University"
+                aria-label="IPB University"
+                className="relative inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-none p-[2px] shadow-2xs transition-transform hover:scale-105 dark:border-[#536471] sm:size-[22px] sm:rounded-[4.5px]"
               >
                 {/* Same quality as the experience list renders it at, so both
                     resolve to one optimised variant instead of fetching the
                     identical 32px logo twice per page load. */}
                 <Image
-                  src="/logos/placeholder-logo.webp"
-                  alt="Perusahaan Contoh"
+                  src="/logos/ipb.png"
+                  alt="Mahasiswa IPB"
                   width={22}
                   height={22}
                   quality={85}
