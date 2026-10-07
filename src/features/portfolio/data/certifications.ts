@@ -17,4 +17,12 @@ export const CERTIFICATIONS: Certification[] = [
     credentialID: "9RK7Q7M6F441",
     credentialURL: "https://coursera.org/verify/9RK7Q7M6F441",
   },
+  {
+    title: "AI Fluency: Framework & Foundations",
+    issuer: "Anthropic",
+    issuerLogoURL: "/logos/anthropic.png",
+    issueDate: "2026-08-23",
+    credentialID: "vsfvdxvdince",
+    credentialURL: "https://verify.skilljar.com/c/vsfvdxvdince",
+  },
 ]

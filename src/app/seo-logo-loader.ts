@@ -23,7 +23,7 @@ import sharp from "sharp"
  * Turbopack support TLA in ESM modules.
  */
 const webpBuffer = fs.readFileSync(
-  path.join(process.cwd(), "public/icons/seo.webp")
+  path.join(process.cwd(), "public/icons/logo.webp")
 )
 
 const pngBuffer = await sharp(webpBuffer)
