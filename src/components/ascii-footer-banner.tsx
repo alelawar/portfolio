@@ -32,7 +32,7 @@ export function AsciiFooterBanner({ className = "" }: AsciiFooterBannerProps) {
       ([entry]) => {
         isIntersecting = entry?.isIntersecting ?? false
         if (isIntersecting && !document.hidden) {
-          video.play().catch(() => {})
+          video.play().catch(() => { })
         } else {
           video.pause()
         }
@@ -46,7 +46,7 @@ export function AsciiFooterBanner({ className = "" }: AsciiFooterBannerProps) {
       if (document.hidden) {
         video.pause()
       } else if (isIntersecting) {
-        video.play().catch(() => {})
+        video.play().catch(() => { })
       }
     }
 
@@ -89,9 +89,8 @@ export function AsciiFooterBanner({ className = "" }: AsciiFooterBannerProps) {
         preload="none"
         aria-hidden="true"
         onPlaying={() => setIsPlaying(true)}
-        className={`absolute inset-0 size-full object-cover object-bottom transition-opacity duration-500 ${
-          isPlaying ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 size-full object-cover object-bottom transition-opacity duration-500 ${isPlaying ? "opacity-100" : "opacity-0"
+          }`}
       />
 
       {/* 3. Subtle Inset Black Shadow Frame */}
@@ -122,7 +121,7 @@ export function AsciiFooterBanner({ className = "" }: AsciiFooterBannerProps) {
           {/* CTA Button */}
           <div className="mt-3.5 sm:mt-4.5">
             <a
-              href="https://wa.me/6280000000000"
+              href="https://wa.me/6283144042644"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-8 shrink-0 items-center justify-center rounded-[min(var(--radius-lg),10px)] bg-white px-3.5 text-sm font-medium text-zinc-950 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
