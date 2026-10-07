@@ -1,7 +1,7 @@
 import { USER } from "@/features/portfolio/data/user"
 import type { NavItem } from "@/types/nav"
 
-const DEFAULT_SITE_URL = "https://www.alelawar.vercel.app"
+const DEFAULT_SITE_URL = "https://www.alelawar.site"
 
 function normalizeSiteUrl(value?: string) {
   if (!value) return DEFAULT_SITE_URL

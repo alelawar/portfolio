@@ -32,9 +32,13 @@ export async function generateMetadata({
     project.title,
     project.category,
     ...project.skills,
-    "Nama Kamu",
-    "namakamu",
+    "Ahmad Lesmana",
+    "alelawar",
   ]
+
+  const imageUrl = project.image.startsWith("http")
+    ? project.image
+    : `${SITE_INFO.url}${project.image}`
 
   return {
     title: project.title,
@@ -54,7 +58,7 @@ export async function generateMetadata({
       description,
       images: [
         {
-          url: project.image,
+          url: imageUrl,
           alt: `${project.title} project screenshot`,
         },
       ],
@@ -64,7 +68,7 @@ export async function generateMetadata({
       title: project.title,
       description,
       creator: `@${USER.username}`,
-      images: [project.image],
+      images: [imageUrl],
     },
   }
 }

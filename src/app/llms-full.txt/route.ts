@@ -94,16 +94,10 @@ function buildLlmsFullTxt(): string {
 
 ## 2. Education & Academic Background
 
-*(Placeholder — replace this section with your own education details.)*
-
-- **Institution**: Universitas Contoh, Indonesia
-- **Degree**: Bachelor of Computer Science
-- **Period**: 2023 – Present
-- **Key Coursework**:
-  - Data Structures & Algorithms
-  - Web Development
-  - Database Management Systems
-  - Software Engineering
+- **Institution**: IPB University, Indonesia
+- **Faculty / School**: College of Vocational Studies (Sekolah Vokasi IPB)
+- **Program / Major**: Software Engineering Technology (Teknologi Rekayasa Perangkat Lunak)
+- **Status**: Active Student
 
 ---
 
@@ -128,12 +122,17 @@ ${techStackSections}
 ## 6. Honors, Hackathon Awards & National Distinctions
 
 ${awardSections}
-
+${
+  publicationSections
+    ? `
 ---
 
 ## 7. Research Publications & Scientific Papers
 
 ${publicationSections}
+`
+    : ""
+}
 
 ---
 

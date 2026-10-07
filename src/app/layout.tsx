@@ -63,8 +63,8 @@ function getProfilePageJsonLd(): WithContext<ProfilePage> {
     alumniOf: [
       {
         "@type": "CollegeOrUniversity",
-        name: "Universitas Dian Nuswantoro",
-        url: "https://dinus.ac.id",
+        name: "IPB University",
+        url: "https://ipb.ac.id",
       },
     ],
     worksFor: USER.jobs.map((job) => ({
