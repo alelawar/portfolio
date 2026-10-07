@@ -104,7 +104,7 @@ export function ProfileHeader({
             className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
           >
             <Globe2 className="size-4" aria-hidden />
-            yourdomain.dev
+            alelawar.site
           </a>
         </div>
 

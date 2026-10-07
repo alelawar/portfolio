@@ -29,7 +29,7 @@ export const USER: User = {
   address: "Indonesia",
   email: "YWhtYWRsZXNtYW5hNzg4QGdtYWlsLmNvbQ==", // base64 of namakamu@example.com
   phone: "+62 831-4404-2644",
-  website: "https://www.yourdomain.dev",
+  website: "https://www.alelawar.site",
 
   jobTitle: "Full Stack Developer",
   seoTitle: "Ahmad Lesmana | Full Stack Developer",
