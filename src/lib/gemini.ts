@@ -14,14 +14,11 @@ type GeminiStreamChunk = {
 const GEMINI_CHAT_COMPLETIONS_URL =
   "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 
-// Urutan model Gemini: 2.5 Flash -> 2.0 Flash -> 1.5 Flash sebagai fallback
+
 const GEMINI_MODELS = [
-  "gemini-3.6",
-  "gemini-3.6-flash-lite",
-  "gemini-3.7",
-  "gemini-3.7-flash-lite",
-  "gemini-3.8-flash",
-  "gemini-3.8-flash-lite",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
 ] as const;
 
 const FRIENDLY_LIMIT_MESSAGE =
@@ -155,7 +152,7 @@ async function createGeminiChatStreamForModel(
         messages,
         stream: true,
         temperature: 0.3,
-        max_tokens: 512,
+        max_tokens: 2048,
       }),
     })
   } catch (err) {
@@ -224,7 +221,7 @@ export async function createGeminiChatCompletion(
             messages,
             stream: false,
             temperature: 0.2,
-            max_tokens: options?.maxCompletionTokens ?? 512,
+            max_tokens: options?.maxCompletionTokens ?? 2048,
             ...(options?.response_format?.type === "json_object"
               ? { response_format: { type: "json_object" } }
               : {}),

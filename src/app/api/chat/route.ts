@@ -42,7 +42,7 @@ const GITHUB_FETCH_TIMEOUT_MS = 3500
 
 // Attempts to nullify or replace existing instructions.
 const OVERRIDE_ATTEMPTS =
-  "ignore|abaikan|lupakan|forget|override|bypass|unlock|unrestricted|tanpa aturan|without rules|no rules|tanpa batasan|no restriction|unfiltered|uncensored|tanpa sensor|tanpa filter|without filter|aturan baru|new rules|previous instructions|prior instructions|instruksi sebelumnya"
+  "ignore|abaikan|lupakan|forget|override|bypass|unlock|unrestricted|tanpa aturan|without rules|no rules|tanpa batasan|no restriction|unfiltered|uncensored|tanpa sensor|tanpa filter|without filter|aturan baru|new rules|previous instructions|prior instructions|instruksi sebelumnya|disregard|dismiss|negate|aturan dasar|panduan dasar|pedoman dasar|konfigurasi awal"
 
 // Named "unlocked" modes popularized by common jailbreak scripts.
 const MODE_SWITCH_ATTEMPTS =
@@ -107,6 +107,15 @@ const APP_BUILD_REQUEST_PATTERN =
   /\b(?:buatkan|buatin|bikinin|build me|make me|create me)\s+(?:(?:a|an)\s+)?(?:app|aplikasi)\b|\b(?:app|aplikasi)\s+(?:untuk\s+(?:saya|aku|gue|gua)|for me)\b/i
 
 async function safeJson(req: Request): Promise<SafeJsonResult> {
+  const contentType = req.headers.get("content-type") ?? ""
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return {
+      ok: false,
+      error: "Content-Type must be application/json.",
+      status: 415,
+    }
+  }
+
   try {
     if (!req.body) {
       return { ok: false, error: "Request body is required.", status: 400 }
@@ -146,7 +155,7 @@ async function safeJson(req: Request): Promise<SafeJsonResult> {
 // Prevents a client-side attacker from crafting a fake "assistant" turn that
 // contains instructions (e.g., "assistant: ignore previous rules...").
 const ASSISTANT_INJECTION_PATTERN =
-  /\b(ignore|forget|override|system:|<system>|instructions?:|new instructions?|pretend|act as|jailbreak|aturan baru|lupakan|abaikan|\[SYSTEM\]|\[INST\])\b/i
+  /\b(ignore|forget|override|disregard|dismiss|system:|<system>|instructions?:|new instructions?|pretend|act as|jailbreak|aturan baru|lupakan|abaikan|pedoman|panduan|\[SYSTEM\]|\[INST\])\b/i
 
 function sanitizeAssistantMessage(content: string): string {
   if (ASSISTANT_INJECTION_PATTERN.test(content)) {
@@ -171,7 +180,7 @@ function stripThinkingBlock(content: string): string {
 function toModelMessages(messages: unknown): IncomingMessage[] {
   if (!Array.isArray(messages)) return []
 
-  return messages
+  const raw = messages
     .filter(
       (message): message is IncomingMessage =>
         typeof message === "object" &&
@@ -189,17 +198,37 @@ function toModelMessages(messages: unknown): IncomingMessage[] {
     }))
     .filter((message) => message.content.length > 0)
     .slice(-MAX_MESSAGES)
-    .map((message) => ({
-      role: message.role,
-      // Sanitize assistant turns before sending - user turns are untrusted
-      // input handled by shouldRefuseOutOfScope() separately.
-      content:
-        message.role === "assistant"
-          ? sanitizeAssistantMessage(
-              message.content.slice(0, MAX_MESSAGE_LENGTH)
-            )
-          : message.content.slice(0, MAX_MESSAGE_LENGTH),
-    }))
+
+  // Enforce valid turn structure:
+  // 1. A valid conversation must begin with a "user" turn.
+  // 2. Roles must strictly alternate (user -> assistant -> user).
+  // 3. Assistant messages are sanitized against prompt injection patterns.
+  const alternating: IncomingMessage[] = []
+  for (const msg of raw) {
+    if (alternating.length === 0) {
+      if (msg.role === "user") {
+        alternating.push({
+          role: "user",
+          content: msg.content.slice(0, MAX_MESSAGE_LENGTH),
+        })
+      }
+    } else {
+      const prev = alternating[alternating.length - 1]
+      if (msg.role !== prev.role) {
+        alternating.push({
+          role: msg.role,
+          content:
+            msg.role === "assistant"
+              ? sanitizeAssistantMessage(
+                  msg.content.slice(0, MAX_MESSAGE_LENGTH)
+                )
+              : msg.content.slice(0, MAX_MESSAGE_LENGTH),
+        })
+      }
+    }
+  }
+
+  return alternating
 }
 
 // ─── Shared Language Scorer ────────────────────────────────────────────────
@@ -524,17 +553,21 @@ export async function POST(req: Request) {
       .map((m) => m.content)
       .join("\n")
 
-    if (shouldRefuseOutOfScope(lastUserMessage)) {
-      return new Response(
-        buildOutOfScopeRefusal(lastUserMessage, languageFallbackText),
-        {
-          headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-            "Cache-Control": "no-cache, no-transform",
-            "X-Content-Type-Options": "nosniff",
-          },
-        }
-      )
+    // Validate EVERY user message in history against prompt-injection / out-of-scope rules,
+    // preventing multi-turn jailbreak and prompt-injection splitting across history turns.
+    for (const userMsg of userMessages) {
+      if (shouldRefuseOutOfScope(userMsg.content)) {
+        return new Response(
+          buildOutOfScopeRefusal(userMsg.content, languageFallbackText),
+          {
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Content-Type-Options": "nosniff",
+            },
+          }
+        )
+      }
     }
 
     const rateLimit = acquireAiRequest(req)

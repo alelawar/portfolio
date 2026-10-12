@@ -28,7 +28,7 @@ export const CERTIFICATIONS: Certification[] = [
   {
     title: "Pemrogram Junior (Junior Coder)",
     issuer: "BNSP",
-    issuerLogoURL: "/logos/bnsp.webp",
+    issuerLogoURL: "/logos/BNSP.webp",
     issueDate: "2026-07-23",
     credentialID: "62019 2514 2 01335 2026",
     credentialURL: "https://drive.google.com/file/d/18F4FVNQCSkaUd_Zc_mOoiK5QXc1ygaRt/view?usp=drive_link"

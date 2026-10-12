@@ -28,6 +28,15 @@ function sanitize(value: unknown, max: number): string {
   return value.replace(/\s+/g, " ").trim().slice(0, max)
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
 // ─── Server-side IP Rate Limiter ──────────────────────────────────────────────
 // Sliding window: max 3 requests per IP per hour.
 // Stored in-memory; resets when the serverless instance cold-starts.
@@ -40,6 +49,10 @@ const ipStore = new Map<string, number[]>()
 
 function getClientIp(req: Request): string {
   const headers = (req as Request & { headers: Headers }).headers
+  const vercelIp = headers.get("x-vercel-forwarded-for")
+  if (vercelIp) return vercelIp.trim()
+  const cfIp = headers.get("cf-connecting-ip")
+  if (cfIp) return cfIp.trim()
   const xRealIp = headers.get("x-real-ip")
   if (xRealIp) return xRealIp.trim()
   const xForwardedFor = headers.get("x-forwarded-for")
@@ -79,7 +92,11 @@ function checkIpRateLimit(ip: string): IpRateLimitResult {
 }
 
 function buildOwnerHtml(payload: ContactPayload) {
-  const { senderName, senderEmail, subject, message } = payload
+  const safeName = escapeHtml(payload.senderName)
+  const safeEmail = escapeHtml(payload.senderEmail)
+  const safeSubject = escapeHtml(payload.subject)
+  const safeMessage = escapeHtml(payload.message)
+
   return `<!DOCTYPE html>
 <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
 <head>
@@ -87,7 +104,7 @@ function buildOwnerHtml(payload: ContactPayload) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <title>${subject}</title>
+  <title>${safeSubject}</title>
   <style>
     :root { color-scheme: light dark; }
 
@@ -190,30 +207,30 @@ function buildOwnerHtml(payload: ContactPayload) {
 <body class="body-wrap">
   <u></u>
   <div class="wrapper">
-    <h1 class="subject">${subject}</h1>
+    <h1 class="subject">${safeSubject}</h1>
 
     <table class="meta-table" cellpadding="0" cellspacing="0">
       <tr>
         <td class="meta-label">From</td>
-        <td class="meta-value">${senderName}</td>
+        <td class="meta-value">${safeName}</td>
       </tr>
       <tr>
         <td class="meta-label">Email</td>
-        <td class="meta-value"><a href="mailto:${senderEmail}">${senderEmail}</a></td>
+        <td class="meta-value"><a href="mailto:${encodeURI(payload.senderEmail)}">${safeEmail}</a></td>
       </tr>
       <tr>
         <td class="meta-label">Subject</td>
-        <td class="meta-value">${subject}</td>
+        <td class="meta-value">${safeSubject}</td>
       </tr>
     </table>
 
     <span class="section-label">Message</span>
     <div class="recap-box">
-      <div class="recap-subject">Subject: ${subject}</div>
-      <div class="recap-body">${message}</div>
+      <div class="recap-subject">Subject: ${safeSubject}</div>
+      <div class="recap-body">${safeMessage}</div>
     </div>
 
-    <a href="mailto:${senderEmail}?subject=Re: ${encodeURIComponent(subject)}" class="reply-btn">Reply</a>
+    <a href="mailto:${encodeURI(payload.senderEmail)}?subject=Re:%20${encodeURIComponent(payload.subject)}" class="reply-btn">Reply</a>
 
     <div class="footer">Sent via ${USER.website}</div>
   </div>
@@ -421,34 +438,25 @@ export async function POST(req: Request) {
       message,
     }
 
-    // Send both emails concurrently
-    const [ownerResult, senderResult] = await Promise.allSettled([
-      resend.emails.send({
-        from: `${USER.displayName} Portfolio <hello@yourdomain.dev>`,
-        to: [OWNER_EMAIL],
-        replyTo: senderEmail,
-        subject: `[Contact] ${subject} - from ${senderName}`,
-        html: buildOwnerHtml(payload),
-      }),
-      resend.emails.send({
-        from: `${USER.displayName} <hello@yourdomain.dev>`,
-        to: [senderEmail],
-        subject: `Message received! – ${USER.displayName}`,
-        html: buildSenderHtml(payload),
-      }),
-    ])
+    // Security Fix (Critical - Open Relay Prevention):
+    // Deliver contact message ONLY to the portfolio owner (OWNER_EMAIL).
+    // Do NOT send unverified automated messages back to senderEmail,
+    // which enables attackers to use this public endpoint as an open spam/phishing relay.
+    // The owner receives replyTo: senderEmail to reply legitimately.
+    const fromAddress =
+      process.env.RESEND_FROM_EMAIL ||
+      `${USER.displayName} Portfolio <hello@yourdomain.dev>`
 
-    const ownerOk =
-      ownerResult.status === "fulfilled" && !ownerResult.value.error
-    const senderOk =
-      senderResult.status === "fulfilled" && !senderResult.value.error
+    const { error: resendError } = await resend.emails.send({
+      from: fromAddress,
+      to: [OWNER_EMAIL],
+      replyTo: senderEmail,
+      subject: `[Contact] ${subject} - from ${senderName}`,
+      html: buildOwnerHtml(payload),
+    })
 
-    if (!ownerOk) {
-      const err =
-        ownerResult.status === "rejected"
-          ? ownerResult.reason
-          : ownerResult.value.error
-      console.error("Failed to send owner email:", err)
+    if (resendError) {
+      console.error("Failed to send owner email:", resendError)
       return NextResponse.json(
         { error: "Failed to send email. Please try again later." },
         { status: 500 }
@@ -457,7 +465,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      senderNotified: senderOk,
+      senderNotified: false,
     })
   } catch (error) {
     console.error("Contact API Error:", error)
