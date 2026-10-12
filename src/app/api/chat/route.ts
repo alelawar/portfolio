@@ -4,11 +4,11 @@ import { FEATURES } from "@/config/features"
 import { getGitHubContributions } from "@/features/portfolio/data/github-contributions"
 import { acquireAiRequest } from "@/lib/chat-rate-limit"
 import {
-  createGroqChatStream,
-  GroqApiError,
-  type GroqChatMessage,
-  GroqConfigurationError,
-} from "@/lib/groq"
+  createGeminiChatStream,
+  GeminiApiError,
+  type GeminiChatMessage,
+  GeminiConfigurationError,
+} from "@/lib/gemini"
 import { buildPortfolioChatContext } from "@/lib/portfolio-chat-context"
 import { buildPortfolioSystemPrompt } from "@/lib/portfolio-chat-prompt"
 
@@ -559,7 +559,7 @@ export async function POST(req: Request) {
       languageFallbackText
     )
 
-    const groqMessages: GroqChatMessage[] = [
+    const geminiMessages: GeminiChatMessage[] = [
       {
         role: "system",
         content: buildPortfolioSystemPrompt({
@@ -570,7 +570,7 @@ export async function POST(req: Request) {
       ...modelMessages,
     ]
 
-    const stream = await createGroqChatStream(groqMessages)
+    const stream = await createGeminiChatStream(geminiMessages)
     const responseStream = releaseWhenClosed(stream, releaseRequest)
     releaseRequest = undefined
 
@@ -583,15 +583,15 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     releaseRequest?.()
-    if (error instanceof GroqConfigurationError) {
+    if (error instanceof GeminiConfigurationError) {
       return NextResponse.json(
-        { error: "No Groq API keys are configured." },
+        { error: "No Gemini API keys are configured." },
         { status: 500 }
       )
     }
 
-    if (error instanceof GroqApiError) {
-      console.error("Groq API Error:", error.message)
+    if (error instanceof GeminiApiError) {
+      console.error("Gemini API Error:", error.message)
 
       return NextResponse.json(
         {

@@ -24,13 +24,13 @@ export const EXPERIENCES: Experience[] = [
         employmentType: "Internship",
         icon: <AstroidIcon />,
         description: `- Developed an internal Salary Slip & Salary Recap application to streamline salary data management and document generation.
-        - Developed a Digital Archive Management application for organizing and managing employee documents.
-        - Managed and maintained internal web applications running on a Linux-based environment.
-        - Worked across backend, database, and application infrastructure to support reliable internal systems.`,
-        descriptionId: `- Mengembangkan aplikasi Slip Gaji & Rekap Gaji internal untuk mempermudah pengelolaan data gaji dan pembuatan dokumen. 
-        - Mengembangkan aplikasi Manajemen Arsip Digital untuk mengelola dan mengorganisir dokumen pegawai. 
-        - Mengelola dan memelihara aplikasi web internal yang berjalan pada lingkungan berbasis Linux. 
-        - Menangani pengembangan backend, database, dan infrastruktur aplikasi untuk mendukung sistem internal yang andal.`,
+- Developed a Digital Archive Management application for organizing and managing employee documents.
+- Managed and maintained internal web applications running on a Linux-based environment.
+- Worked across backend, database, and application infrastructure to support reliable internal systems.`,
+        descriptionId: `- Mengembangkan aplikasi Slip Gaji & Rekap Gaji internal untuk mempermudah pengelolaan data gaji dan pembuatan dokumen.
+- Mengembangkan aplikasi Manajemen Arsip Digital untuk mengelola dan mengorganisir dokumen pegawai.
+- Mengelola dan memelihara aplikasi web internal yang berjalan pada lingkungan berbasis Linux.
+- Menangani pengembangan backend, database, dan infrastruktur aplikasi untuk mendukung sistem internal yang andal.`,
         skills: ["Laravel", "Electron", "TypeScript", "Node.js", "Linux", "Go" ,"Testing", ],
       },
     ],

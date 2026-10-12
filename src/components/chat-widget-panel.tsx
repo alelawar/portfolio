@@ -24,6 +24,7 @@ import { useChat } from "@/components/chat-provider"
 import { TextShimmer } from "@/components/core/text-shimmer"
 import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
+import { USER } from "@/features/portfolio/data/user"
 import { useTranslation } from "@/lib/i18n/use-translation"
 import { cn } from "@/lib/utils"
 
@@ -1074,8 +1075,8 @@ export function ChatWidgetPanel() {
       }
       tooldescription={
         emailFlow.step === "filling_form"
-          ? "Send a direct contact email inquiry to Nama Kamu"
-          : "Ask questions about Nama Kamu's skills, projects, experience, or background"
+          ? `Send a direct contact email inquiry to ${USER.displayName}`
+          : `Ask questions about ${USER.displayName}'s skills, projects, experience, or background`
       }
       onSubmit={(e) => {
         e.preventDefault()
@@ -1156,8 +1157,8 @@ export function ChatWidgetPanel() {
             name={emailFlow.step === "filling_form" ? "message" : "query"}
             toolparamdescription={
               emailFlow.step === "filling_form"
-                ? "Message body or inquiry to send to Nama Kamu"
-                : "Natural language question about Nama Kamu's portfolio or background"
+                ? `Message body or inquiry to send to ${USER.displayName}`
+                : `Natural language question about ${USER.displayName}'s portfolio or background`
             }
             value={
               emailFlow.step === "filling_form" ? emailFlow.rawMessage : input
@@ -1336,7 +1337,7 @@ export function ChatWidgetPanel() {
               onClick={() => setBudgetOpen(!budgetOpen)}
             >
               <span className="flex items-center gap-1.5 font-handwritten text-[1.15rem] tracking-wide text-foreground select-none">
-                Nama Kamu
+                {USER.displayName}
                 <ChevronDownIcon
                   className={cn(
                     "size-4 text-muted-foreground transition-transform duration-200",

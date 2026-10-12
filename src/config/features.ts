@@ -8,12 +8,12 @@
  * the matching API key to `.env.local` and filled in your own data.
  */
 export const FEATURES = {
-  /** AI chat widget (streaming answers via Groq). See src/app/api/chat/route.ts */
-  AI_CHAT: false,
+  /** AI chat widget (streaming answers via Gemini/Groq). See src/app/api/chat/route.ts */
+  AI_CHAT: true,
   /** Contact form email delivery via Resend. See src/app/api/contact/route.ts */
   CONTACT_EMAIL: false,
-  /** AI-assisted contact message formatting via Groq. See src/app/api/format-email/route.ts */
-  AI_FORMAT_EMAIL: false,
+  /** AI-assisted contact message formatting via Gemini/Groq. See src/app/api/format-email/route.ts */
+  AI_FORMAT_EMAIL: true,
   /** Blog posts pulled live from a Medium RSS feed. See src/features/blog/lib/fetch-medium-posts.ts */
   MEDIUM_BLOG: false,
   /** Live GitHub contributions graph + follower/star counts. See src/features/portfolio/data/github-*.ts */

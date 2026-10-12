@@ -4,10 +4,10 @@ import { FEATURES } from "@/config/features"
 import { USER } from "@/features/portfolio/data/user"
 import { acquireAiRequest } from "@/lib/chat-rate-limit"
 import {
-  createGroqChatCompletion,
-  GroqApiError,
-  GroqConfigurationError,
-} from "@/lib/groq"
+  createGeminiChatCompletion,
+  GeminiApiError,
+  GeminiConfigurationError,
+} from "@/lib/gemini"
 
 export const runtime = "nodejs"
 
@@ -85,7 +85,7 @@ Raw message: ${payload.rawMessage}
 
 Format this into a professional email JSON.`
 
-    const content = await createGroqChatCompletion(
+    const content = await createGeminiChatCompletion(
       [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -121,14 +121,14 @@ Format this into a professional email JSON.`
     return NextResponse.json({ subject, message })
   } catch (error) {
     releaseRequest?.()
-    if (error instanceof GroqConfigurationError) {
+    if (error instanceof GeminiConfigurationError) {
       return NextResponse.json(
         { error: "Service not configured." },
         { status: 500 }
       )
     }
 
-    if (error instanceof GroqApiError) {
+    if (error instanceof GeminiApiError) {
       console.error("Format Email API Error:", error.message)
       return NextResponse.json(
         {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-
+import { PROJECTS } from "@/features/portfolio/data/projects"
+import { USER } from "@/features/portfolio/data/user"
 import { getPortfolioWebMCPTools, registerWebMCPTools } from "./register-tools"
 
 describe("WebMCP Tool Registration & Execution", () => {
@@ -30,7 +31,7 @@ describe("WebMCP Tool Registration & Execution", () => {
     expect(resAll.totalCount).toBeGreaterThan(0)
     expect(resAll.projects.length).toBeLessThanOrEqual(10)
 
-    const resQuery = (await searchTool.execute({ query: "next.js" })) as {
+    const resQuery = (await searchTool.execute({ query: "laravel" })) as {
       totalCount: number
       projects: unknown[]
     }
@@ -39,14 +40,15 @@ describe("WebMCP Tool Registration & Execution", () => {
 
   it("executes get_project_details for valid and invalid slugs", async () => {
     const detailsTool = tools.find((t) => t.name === "get_project_details")!
+    const firstProject = PROJECTS[0]
 
-    const resValid = (await detailsTool.execute({ slug: "project-one" })) as {
+    const resValid = (await detailsTool.execute({ slug: firstProject.id })) as {
       id: string
       title: string
       role: string
     }
-    expect(resValid.id).toBe("project-one")
-    expect(resValid.title).toContain("Project One")
+    expect(resValid.id).toBe(firstProject.id)
+    expect(resValid.title).toBe(firstProject.title)
 
     const resInvalid = (await detailsTool.execute({ slug: "nonexistent-slug-123" })) as {
       error: string
@@ -60,11 +62,10 @@ describe("WebMCP Tool Registration & Execution", () => {
     const profileTool = tools.find((t) => t.name === "get_profile_overview")!
     const res = (await profileTool.execute({})) as {
       name: string
-      education: { gpa: string; institution: string }
+      education: { gpa?: string; institution?: string }
       techStackSummary: unknown[]
     }
-    expect(res.name).toBe("Nama Kamu")
-    expect(res.education.institution).toContain("Universitas Contoh")
+    expect(res.name).toBe(USER.displayName)
     expect(res.techStackSummary.length).toBeGreaterThan(0)
   })
 

@@ -381,7 +381,26 @@ function getQueryExpansions(query: string) {
       normalized
     )
   ) {
-    add("frontend", "backend", "fullstack", "react", "next", "typescript")
+    add(
+      "frontend",
+      "backend",
+      "fullstack",
+      "react",
+      "next",
+      "typescript",
+      "laravel",
+      "php",
+      "go",
+      "golang"
+    )
+  }
+
+  if (/\b(laravel|php|go|golang|electron|vps|linux)\b/.test(normalized)) {
+    add("laravel", "php", "backend", "system", "internship", "project")
+  }
+
+  if (/\b(ipb|sdm|magang|intern|internship)\b/.test(normalized)) {
+    add("ipb", "sdm", "internship", "experience", "salary", "archive")
   }
 
   return Array.from(expansions)

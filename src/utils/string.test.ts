@@ -12,6 +12,6 @@ describe("decodeEmail", () => {
   })
 
   it("decodes the value stored in the USER data", () => {
-    expect(decodeEmail(USER.email)).toContain("@example.com")
+    expect(decodeEmail(USER.email)).toContain("@")
   })
 })
