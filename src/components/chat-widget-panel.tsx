@@ -61,8 +61,6 @@ type FormattedEmail = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const RECENT_MESSAGE_LIMIT = 4
-const STREAM_TOKEN_BATCH_SIZE = 2 // 1 word + 1 space
-const STREAM_BATCH_DELAY_MS = 12
 
 const BUDGET_KEY = "portfolio_ai_budget_data"
 const BUDGET_LIMIT = 6000
@@ -474,8 +472,23 @@ MarkdownRenderer.displayName = "MarkdownRenderer"
 
 export function ChatWidgetPanel() {
   const { isChatOpen, setIsChatOpen } = useChat()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { resolvedTheme } = useTheme()
+
+  const suggestions =
+    language === "id"
+      ? [
+          "Apa yang bisa kamu bantu?",
+          "Tech stack apa yang dikuasai?",
+          "Kasih saya informasi kontak",
+          "Proyek apa saja yang pernah dibuat?",
+        ]
+      : [
+          "What can you help?",
+          "What's your tech stack?",
+          "Give me contact information",
+          "Key projects you've built?",
+        ]
   const [isChatActive, setIsChatActive] = useState(false)
   const [modeMenuOpen, setModeMenuOpen] = useState(false)
   const modeMenuRef = useRef<HTMLDivElement>(null)
@@ -755,31 +768,10 @@ export function ChatWidgetPanel() {
     )
   }
 
-  async function appendAssistantContentFast(
-    messageId: string,
-    content: string
-  ) {
-    const tokens = content.split(/(\s+)/).filter(Boolean)
-    for (
-      let index = 0;
-      index < tokens.length;
-      index += STREAM_TOKEN_BATCH_SIZE
-    ) {
-      appendAssistantContent(
-        messageId,
-        tokens.slice(index, index + STREAM_TOKEN_BATCH_SIZE).join("")
-      )
-      await new Promise<void>((resolve) =>
-        window.setTimeout(resolve, STREAM_BATCH_DELAY_MS)
-      )
-    }
-  }
-
   // ── Inject an AI message into the chat ──────────────────────────────────────
   async function injectAssistantMessage(text: string) {
     const id = createId()
-    setMessages((prev) => [...prev, { id, role: "assistant", content: "" }])
-    await appendAssistantContentFast(id, text)
+    setMessages((prev) => [...prev, { id, role: "assistant", content: text }])
     return id
   }
 
@@ -946,10 +938,13 @@ export function ChatWidgetPanel() {
   }
 
   // ── Main chat submit ─────────────────────────────────────────────────────────
-  async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event?: FormEvent<HTMLFormElement>,
+    overrideInput?: string
+  ) {
     event?.preventDefault()
 
-    const trimmedInput = input.trim()
+    const trimmedInput = (overrideInput ?? input).trim()
     if (!trimmedInput || isLoading) return
 
     if (budgetSpent >= BUDGET_LIMIT) {
@@ -1033,10 +1028,15 @@ export function ChatWidgetPanel() {
         const { done, value } = await reader.read()
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
-        await appendAssistantContentFast(assistantMessage.id, chunk)
+        if (chunk) {
+          appendAssistantContent(assistantMessage.id, chunk)
+        }
       }
 
-      await appendAssistantContentFast(assistantMessage.id, decoder.decode())
+      const remainder = decoder.decode()
+      if (remainder) {
+        appendAssistantContent(assistantMessage.id, remainder)
+      }
     } catch (submitError) {
       if (abortController.signal.aborted) return
 
@@ -1054,6 +1054,11 @@ export function ChatWidgetPanel() {
       flushBudget()
       abortControllerRef.current = null
     }
+  }
+
+  const handleSuggestionClick = (promptText: string) => {
+    if (isLoading || emailFlow.step !== "idle") return
+    void handleSubmit(undefined, promptText)
   }
 
   // ── Derived state ────────────────────────────────────────────────────────────
@@ -1406,7 +1411,7 @@ export function ChatWidgetPanel() {
           {!isChatActive ? (
             <div className="flex-1" />
           ) : (
-            <div className="min-w-0 flex-1 space-y-7 overflow-x-hidden overflow-y-auto pt-6 pr-6 pb-36 pl-4 sm:pb-40">
+            <div className="min-w-0 flex-1 space-y-7 overflow-x-hidden overflow-y-auto pt-6 pr-6 pb-44 pl-4 sm:pb-48">
               {messages.map((m) => {
                 if (m.role === "assistant" && !m.content) return null
 
@@ -1500,7 +1505,24 @@ export function ChatWidgetPanel() {
 
           {/* Unified Fixed Bottom Input Dock */}
           <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-30 bg-linear-to-t from-background via-background/90 to-transparent p-4 pt-10 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:p-5 sm:pt-12 sm:pb-5">
-            <div className="pointer-events-auto w-full">{FormElement}</div>
+            <div className="pointer-events-auto w-full">
+              {emailFlow.step === "idle" && (
+                <div className="mb-2 flex items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      disabled={isLoading}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-card/90 px-3 py-1.5 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur-md transition-all hover:border-foreground/30 hover:bg-muted hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-50 sm:text-xs dark:border-white/10 dark:bg-[#1a1a1a]/90 dark:hover:border-white/20 dark:hover:bg-white/10"
+                    >
+                      <span>{suggestion}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {FormElement}
+            </div>
           </div>
         </div>
       </div>

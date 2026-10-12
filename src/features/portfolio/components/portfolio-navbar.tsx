@@ -321,6 +321,14 @@ export function PortfolioNavbar({ className }: { className?: string }) {
     //   type: "link" as const,
     // },
     {
+      id: "chat",
+      label: t.nav.chat,
+      icon: IconChat,
+      type: "action" as const,
+      onClick: handleOpenChat,
+      onPointerEnter: preloadChatPanel,
+    },
+    {
       id: "settings",
       label: t.nav.settings,
       icon: GearSix,
@@ -347,7 +355,7 @@ export function PortfolioNavbar({ className }: { className?: string }) {
       )}
       aria-label="Main Navigation"
     >
-      <div className="relative grid h-full w-full grid-cols-3">
+      <div className="relative grid h-full w-full grid-cols-4">
         {items.map((item) => {
           const isActive =
             item.type === "link" &&
@@ -438,7 +446,7 @@ export function PortfolioNavbar({ className }: { className?: string }) {
         })}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          className="pointer-events-none absolute inset-y-0 left-0 w-1/4 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
           style={{
             opacity: activeItemIndex >= 0 ? 1 : 0,
             transform: `translate3d(${Math.max(activeItemIndex, 0) * 100}%, 0, 0)`,

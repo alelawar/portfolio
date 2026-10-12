@@ -16,10 +16,13 @@ const GEMINI_CHAT_COMPLETIONS_URL =
 
 // Urutan model Gemini: 2.5 Flash -> 2.0 Flash -> 1.5 Flash sebagai fallback
 const GEMINI_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-] as const
+  "gemini-3.6",
+  "gemini-3.6-flash-lite",
+  "gemini-3.7",
+  "gemini-3.7-flash-lite",
+  "gemini-3.8-flash",
+  "gemini-3.8-flash-lite",
+] as const;
 
 const FRIENDLY_LIMIT_MESSAGE =
   "The chat is busy right now. Please try again shortly."
@@ -152,7 +155,7 @@ async function createGeminiChatStreamForModel(
         messages,
         stream: true,
         temperature: 0.3,
-        max_tokens: 2048,
+        max_tokens: 512,
       }),
     })
   } catch (err) {
@@ -221,7 +224,7 @@ export async function createGeminiChatCompletion(
             messages,
             stream: false,
             temperature: 0.2,
-            max_tokens: options?.maxCompletionTokens ?? 1024,
+            max_tokens: options?.maxCompletionTokens ?? 512,
             ...(options?.response_format?.type === "json_object"
               ? { response_format: { type: "json_object" } }
               : {}),
