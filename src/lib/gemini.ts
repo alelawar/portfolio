@@ -14,12 +14,43 @@ type GeminiStreamChunk = {
 const GEMINI_CHAT_COMPLETIONS_URL =
   "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 
-
 const GEMINI_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash-lite",
   "gemini-3.7-flash",
   "gemini-3.6-flash",
-  "gemini-3.5-flash",
-] as const;
+  // Lighter fallbacks: stay fast even when the flash models are overloaded.
+] as const
+
+// Max time to wait for Gemini to start responding before falling back to the
+// next model. Overloaded models can hang indefinitely without an error.
+const GEMINI_RESPONSE_TIMEOUT_MS = 8_000
+
+// Keeps hidden "thinking" short so it doesn't eat max_tokens or add latency.
+const GEMINI_REASONING_EFFORT = "medium"
+
+// Statuses that mean the whole model is unhealthy, so trying another key
+// for the same model is pointless.
+function isModelUnavailable(status: number) {
+  return status === 503 || status === 504 || status === 404
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), GEMINI_RESPONSE_TIMEOUT_MS)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new GeminiApiError("Gemini response timed out", 504)
+    }
+    const msg = err instanceof Error ? err.message : "Network error"
+    throw new GeminiApiError(`Network error: ${msg}`, 503)
+  } finally {
+    // Only guards the wait for response headers; the body stream continues.
+    clearTimeout(timer)
+  }
+}
 
 const FRIENDLY_LIMIT_MESSAGE =
   "The chat is busy right now. Please try again shortly."
@@ -139,26 +170,21 @@ async function createGeminiChatStreamForModel(
   model: string,
   apiKey: string
 ) {
-  let response: Response
-  try {
-    response = await fetch(GEMINI_CHAT_COMPLETIONS_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        stream: true,
-        temperature: 0.3,
-        max_tokens: 2048,
-      }),
-    })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Network error"
-    throw new GeminiApiError(`Network error: ${msg}`, 503)
-  }
+  const response = await fetchWithTimeout(GEMINI_CHAT_COMPLETIONS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      stream: true,
+      temperature: 0.3,
+      max_tokens: 2048,
+      reasoning_effort: GEMINI_REASONING_EFFORT,
+    }),
+  })
 
   if (!response.ok || !response.body) {
     const errorBody = await response.text().catch(() => "")
@@ -183,6 +209,7 @@ export async function createGeminiChatStream(messages: GeminiChatMessage[]) {
         if (error instanceof GeminiApiError) {
           lastError = error
           console.warn(`Gemini API error on ${model}: ${error.status}`)
+          if (isModelUnavailable(error.status)) break
           continue
         }
         throw error
@@ -210,7 +237,7 @@ export async function createGeminiChatCompletion(
   for (const model of GEMINI_MODELS) {
     for (const apiKey of apiKeys) {
       try {
-        const response = await fetch(GEMINI_CHAT_COMPLETIONS_URL, {
+        const response = await fetchWithTimeout(GEMINI_CHAT_COMPLETIONS_URL, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey}`,
@@ -221,6 +248,7 @@ export async function createGeminiChatCompletion(
             messages,
             stream: false,
             temperature: 0.2,
+            reasoning_effort: GEMINI_REASONING_EFFORT,
             max_tokens: options?.maxCompletionTokens ?? 2048,
             ...(options?.response_format?.type === "json_object"
               ? { response_format: { type: "json_object" } }
@@ -238,6 +266,7 @@ export async function createGeminiChatCompletion(
       } catch (error) {
         if (error instanceof GeminiApiError) {
           lastError = error
+          if (isModelUnavailable(error.status)) break
           continue
         }
         throw error
@@ -247,4 +276,3 @@ export async function createGeminiChatCompletion(
 
   throw lastError ?? new GeminiApiError("Gemini could not process request", 500)
 }
-
