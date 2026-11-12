@@ -11,7 +11,7 @@ export const FEATURES = {
   /** AI chat widget (streaming answers via Gemini/Groq). See src/app/api/chat/route.ts */
   AI_CHAT: true,
   /** Contact form email delivery via Resend. See src/app/api/contact/route.ts */
-  CONTACT_EMAIL: false,
+  CONTACT_EMAIL: true,
   /** AI-assisted contact message formatting via Gemini/Groq. See src/app/api/format-email/route.ts */
   AI_FORMAT_EMAIL: true,
   /** Blog posts pulled live from a Medium RSS feed. See src/features/blog/lib/fetch-medium-posts.ts */
